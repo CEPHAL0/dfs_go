@@ -1,7 +1,7 @@
 package userWalletmodels
 
 import (
-	authmodels "backend/models/auth"
+	authModels "backend/models/auth"
 	walletmodels "backend/models/wallet"
 	"time"
 
@@ -13,7 +13,7 @@ type UserWallet struct {
 	gorm.Model
 	ID           uuid.UUID               `gorm:"type:uuid;default:gen_random_uuid();primaryKey;not null" json:"id"`
 	UserID       uuid.UUID               `gorm:"not null" json:"userId"`
-	User         authmodels.User         `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;"`
+	User         authModels.User         `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;"`
 	WalletTypeID uuid.UUID               `gorm:"not null" json:"walletTypeId"`
 	WalletType   walletmodels.WalletType `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT;"`
 	DfsID        uint                    `gorm:"not null;unique" json:"dfsId"`

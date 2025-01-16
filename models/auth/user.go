@@ -1,4 +1,4 @@
-package authmodels
+package authModels
 
 import (
 	"backend/enums"
