@@ -16,5 +16,5 @@ type User struct {
 	IsPasswordExpired bool       `gorm:"default:false;not null" json:"is_password_expired"`
 	CreatedAt         time.Time  `gorm:"autoCreateTime;not null" json:"-"`
 	UpdatedAt         time.Time  `gorm:"autoUpdateTime;not null" json:"-"`
-	DeletedAt         time.Time  `json:"-"`
+	DeletedAt         time.Time  `gorm:"default:null" json:"-"`
 }
