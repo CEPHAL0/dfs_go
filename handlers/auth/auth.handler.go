@@ -14,11 +14,11 @@ func Register(c *fiber.Ctx) error {
 	var data schemas.RegisterSchema
 
 	if err := c.BodyParser(&data); err != nil {
-		return utils.ErrorResponse(err.Error(), "Validation Failed", fiber.StatusUnprocessableEntity, c)
+		return utils.ErrorResponse(err.Error(), "Invalid Request", fiber.StatusUnprocessableEntity, c)
 	}
 
 	if err := utils.Validate(data); err != nil {
-		return utils.ErrorResponse(err.Error(), "Validation Failed", fiber.StatusBadRequest, c)
+		return utils.ErrorResponse(err.Error(), "Validation Error", fiber.StatusBadRequest, c)
 	}
 
 	userRepository := repositories.NewUserRepository(config.DB)
@@ -29,9 +29,22 @@ func Register(c *fiber.Ctx) error {
 		return utils.ErrorResponse(err.Error(), "Failed to Create User", fiber.StatusBadRequest, c)
 	}
 
-	response := utils.APIResponse{StatusCode: fiber.StatusCreated, Success: enums.SUCCESS, Data: user, Message: "User Successfully Created"}
+	sessionRepository := repositories.NewSessionRepository(config.DB)
 
-	return c.Status(response.StatusCode).JSON(response)
+	newSession, err := sessionRepository.Create(user.ID)
+
+	if err != nil {
+		return utils.ErrorResponse(err.Error(), "Failed to create session", fiber.StatusInternalServerError, c)
+	}
+
+	err = sessionRepository.SetSession(newSession, c)
+
+	if err != nil {
+		return utils.ErrorResponse(err.Error(), "Failed to save session", fiber.StatusInternalServerError, c)
+	}
+
+	return utils.SuccessResponse("User Successfully Created", user, fiber.StatusCreated, c)
+
 }
 
 func Login(c *fiber.Ctx) error {

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -13,6 +14,7 @@ type IUserRepository interface {
 	// GetByID(username string) authModels.User
 	GetByEmail(email string) (*authModels.User, error)
 	Insert(username string, password string, email string, role enums.Role) (authModels.User, error)
+	ComparePassword(toCompare string, original string) bool
 }
 
 type UserRepository struct {
@@ -44,10 +46,18 @@ func (userRepository *UserRepository) Insert(username string, email string, pass
 		return authModels.User{}, errors.New("user with email already exists")
 	}
 
+	pwdByte := []byte(password)
+
+	hashedPassword, err := hashPassword(pwdByte)
+
+	if err != nil {
+		return authModels.User{}, err
+	}
+
 	user := authModels.User{
 		Name:              username,
 		Email:             email,
-		Password:          password,
+		Password:          hashedPassword,
 		Role:              role,
 		IsPasswordExpired: true,
 	}
@@ -60,4 +70,28 @@ func (userRepository *UserRepository) Insert(username string, email string, pass
 
 	return user, nil
 
+}
+
+func (userRepository *UserRepository) ComparePassword(toCompare string, hashed string) bool {
+
+	byteHashed := []byte(hashed)
+
+	err := bcrypt.CompareHashAndPassword(byteHashed, []byte(toCompare))
+
+	if err != nil {
+		return false
+	} else {
+		return true
+	}
+
+}
+
+func hashPassword(password []byte) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword(password, bcrypt.MinCost)
+
+	if err != nil {
+		return "", err
+	}
+
+	return string(hash), nil
 }
