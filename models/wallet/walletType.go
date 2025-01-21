@@ -1,4 +1,4 @@
-package walletmodels
+package walletModels
 
 import (
 	"backend/enums"

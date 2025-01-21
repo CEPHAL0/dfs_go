@@ -2,7 +2,7 @@ package main
 
 import (
 	database "backend/config"
-	router "backend/routes"
+	routers "backend/routes"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -13,7 +13,7 @@ func main() {
 	database.SetupDatabase()
 	database.Migrate(database.DB)
 
-	router.Initialize(app)
+	routers.Initialize(app)
 
 	app.Listen(":3000")
 }

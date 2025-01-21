@@ -1,8 +1,8 @@
-package userwallettransactionmodels
+package userWalletTransactionModels
 
 import (
 	"backend/enums"
-	userWalletmodels "backend/models/userWallet"
+	userwalletModels "backend/models/userWallet"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,7 +11,7 @@ import (
 type UserWalletTransaction struct {
 	ID           uuid.UUID                   `gorm:"primaryKey;not null;default:gen_random_uuid();type:uuid" json:"id"`
 	UserWalletID uuid.UUID                   `gorm:"not null" json:"userWalletId"`
-	UserWallet   userWalletmodels.UserWallet `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	UserWallet   userwalletModels.UserWallet `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	Amount      float64               `gorm:"not null;type:numeric(10,2)"`
 	Date        time.Time             `gorm:"not null" json:"date"`

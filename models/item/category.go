@@ -1,4 +1,4 @@
-package itemmodels
+package itemModels
 
 import (
 	"time"

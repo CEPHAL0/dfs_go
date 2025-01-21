@@ -1,4 +1,4 @@
-package authRouter
+package authRouters
 
 import (
 	authHandler "backend/handlers/auth"

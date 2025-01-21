@@ -1,7 +1,7 @@
-package menumodels
+package menuModels
 
 import (
-	itemmodels "backend/models/item"
+	itemModels "backend/models/item"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,10 +15,10 @@ type Menu struct {
 	ID uuid.UUID `gorm:"primaryKey;default:gen_random_uuid();type:uuid;not null" json:"id"`
 
 	ItemID uuid.UUID       `json:"itemId"`
-	Item   itemmodels.Item `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	Item   itemModels.Item `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	CategoryID uuid.UUID           `json:"categoryID"`
-	Category   itemmodels.Category `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	Category   itemModels.Category `gorm:"constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	InitialQty   uint `gorm:"not null" json:"initialQty"`
 	AvailableQty uint `gorm:"not null" json:"availableQty"`
