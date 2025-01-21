@@ -5,6 +5,7 @@ import (
 	"backend/enums"
 	"backend/repositories"
 	"backend/schemas"
+	"backend/services"
 	"backend/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -22,27 +23,25 @@ func Register(c *fiber.Ctx) error {
 	}
 
 	userRepository := repositories.NewUserRepository(config.DB)
-
-	user, err := userRepository.Insert(data.Username, data.Email, data.Password, enums.CUSTOMER)
-
-	if err != nil {
-		return utils.ErrorResponse(err.Error(), "Failed to Create User", fiber.StatusBadRequest, c)
-	}
-
 	sessionRepository := repositories.NewSessionRepository(config.DB)
+	userService := services.NewUserService(userRepository, sessionRepository)
 
-	newSession, err := sessionRepository.Create(user.ID)
+	tx := config.DB.Begin()
 
+	user, session, err := userService.RegisterUser(data.Username, data.Email, data.Password, enums.CUSTOMER)
 	if err != nil {
-		return utils.ErrorResponse(err.Error(), "Failed to create session", fiber.StatusInternalServerError, c)
+		tx.Rollback()
+		return utils.ErrorResponse(err.Error(), "Failed to Create User", fiber.StatusInternalServerError, c)
 	}
 
-	err = sessionRepository.SetSession(newSession, c)
+	err = utils.SetSession(session, c)
 
 	if err != nil {
-		return utils.ErrorResponse(err.Error(), "Failed to save session", fiber.StatusInternalServerError, c)
+		tx.Rollback()
+		return utils.ErrorResponse(err.Error(), "Failed to Save Session", fiber.StatusInternalServerError, c)
 	}
 
+	tx.Commit()
 	return utils.SuccessResponse("User Successfully Created", user, fiber.StatusCreated, c)
 
 }

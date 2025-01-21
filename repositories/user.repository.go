@@ -13,7 +13,7 @@ import (
 type IUserRepository interface {
 	// GetByID(username string) authModels.User
 	GetByEmail(email string) (*authModels.User, error)
-	Insert(username string, password string, email string, role enums.Role) (authModels.User, error)
+	Insert(username string, password string, email string, role enums.Role) (*authModels.User, error)
 	ComparePassword(toCompare string, original string) bool
 }
 
@@ -35,15 +35,15 @@ func (userRepository *UserRepository) GetByEmail(email string) (*authModels.User
 	return &user, nil
 }
 
-func (userRepository *UserRepository) Insert(username string, email string, password string, role enums.Role) (authModels.User, error) {
+func (userRepository *UserRepository) Insert(username string, email string, password string, role enums.Role) (*authModels.User, error) {
 
 	existingUser, err := userRepository.GetByEmail(email)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return authModels.User{}, fmt.Errorf("database error: %w", err)
+		return &authModels.User{}, fmt.Errorf("database error: %w", err)
 	}
 
 	if existingUser != nil {
-		return authModels.User{}, errors.New("user with email already exists")
+		return &authModels.User{}, errors.New("user with email already exists")
 	}
 
 	pwdByte := []byte(password)
@@ -51,7 +51,7 @@ func (userRepository *UserRepository) Insert(username string, email string, pass
 	hashedPassword, err := hashPassword(pwdByte)
 
 	if err != nil {
-		return authModels.User{}, err
+		return &authModels.User{}, err
 	}
 
 	user := authModels.User{
@@ -65,10 +65,10 @@ func (userRepository *UserRepository) Insert(username string, email string, pass
 	result := userRepository.DB.Create(&user)
 
 	if result.Error != nil {
-		return authModels.User{}, result.Error
+		return &authModels.User{}, result.Error
 	}
 
-	return user, nil
+	return &user, nil
 
 }
 
