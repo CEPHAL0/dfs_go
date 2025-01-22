@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
@@ -12,6 +13,38 @@ import (
 )
 
 var DB *gorm.DB
+var once sync.Once
+
+func Initialize(db *gorm.DB) {
+	once.Do(func() {
+		DB = db
+	})
+}
+
+func GetDB() *gorm.DB {
+	if DB == nil {
+		panic("Database not initialized, Call Initialize() function first")
+	}
+	return DB
+}
+
+func WithTransaction(txFunc func(tx *gorm.DB) error) error {
+	tx := GetDB().Begin()
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+
+		}
+	}()
+
+	if err := txFunc(tx); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
+}
 
 func SetupDatabase() {
 	initErr := godotenv.Load()

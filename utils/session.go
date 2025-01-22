@@ -30,9 +30,5 @@ func SetSession(sessionToSet *authModels.Session, c *fiber.Ctx) error {
 	sess.Set("sessionID", &sessionToSet.SessionID)
 	err = sess.Save()
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }

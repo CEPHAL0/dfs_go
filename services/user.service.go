@@ -1,14 +1,15 @@
 package services
 
 import (
-	"backend/config"
 	"backend/enums"
 	authModels "backend/models/auth"
 	"backend/repositories"
+
+	"gorm.io/gorm"
 )
 
 type IUserService interface {
-	RegisterUser(username, email, password string, role enums.Role) (*authModels.User, *authModels.Session, error)
+	RegisterUser(username, email, password string, role enums.Role, tx *gorm.DB) (*authModels.User, *authModels.Session, error)
 }
 
 type UserService struct {
@@ -23,22 +24,17 @@ func NewUserService(userRepository repositories.IUserRepository, sessionReposito
 	}
 }
 
-func (userService *UserService) RegisterUser(username, email, password string, role enums.Role) (*authModels.User, *authModels.Session, error) {
+func (userService *UserService) RegisterUser(username, email, password string, role enums.Role, tx *gorm.DB) (*authModels.User, *authModels.Session, error) {
 
-	tx := config.DB.Begin()
-
-	user, err := userService.UserRepository.Insert(username, email, password, role)
+	user, err := userService.UserRepository.CreateWithTx(username, email, password, role, tx)
 	if err != nil {
-		tx.Rollback()
 		return nil, nil, err
 	}
 
-	session, err := userService.SessionRepository.Create(user.ID)
+	session, err := userService.SessionRepository.CreateWithTx(user.ID, tx)
 	if err != nil {
-		tx.Rollback()
 		return nil, nil, err
 	}
 
-	tx.Commit()
 	return user, session, nil
 }
