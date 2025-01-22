@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"backend/config"
 	"backend/enums"
 	authModels "backend/models/auth"
 	"errors"
@@ -13,7 +14,7 @@ import (
 type IUserRepository interface {
 	// GetByID(username string) authModels.User
 	GetByEmail(email string) (*authModels.User, error)
-	Insert(username string, password string, email string, role enums.Role) (*authModels.User, error)
+	Create(tx *gorm.DB, username string, password string, email string, role enums.Role) (*authModels.User, error)
 	ComparePassword(toCompare string, original string) bool
 }
 
@@ -21,8 +22,8 @@ type UserRepository struct {
 	*gorm.DB
 }
 
-func NewUserRepository(DB *gorm.DB) IUserRepository {
-	return &UserRepository{DB: DB}
+func NewUserRepository() IUserRepository {
+	return &UserRepository{DB: config.GetDB()}
 }
 
 func (userRepository *UserRepository) GetByEmail(email string) (*authModels.User, error) {
@@ -35,7 +36,7 @@ func (userRepository *UserRepository) GetByEmail(email string) (*authModels.User
 	return &user, nil
 }
 
-func (userRepository *UserRepository) Insert(username string, email string, password string, role enums.Role) (*authModels.User, error) {
+func (userRepository *UserRepository) Create(tx *gorm.DB, username string, email string, password string, role enums.Role) (*authModels.User, error) {
 
 	existingUser, err := userRepository.GetByEmail(email)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -62,10 +63,10 @@ func (userRepository *UserRepository) Insert(username string, email string, pass
 		IsPasswordExpired: true,
 	}
 
-	result := userRepository.DB.Create(&user)
+	err = tx.Create(&user).Error
 
-	if result.Error != nil {
-		return &authModels.User{}, result.Error
+	if err != nil {
+		return &authModels.User{}, err
 	}
 
 	return &user, nil

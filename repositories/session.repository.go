@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	database "backend/config"
 	authModels "backend/models/auth"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 var SessionDuration = time.Hour * 24 * 5
 
 type ISessionRepository interface {
-	Create(userID uuid.UUID) (*authModels.Session, error)
+	Create(tx *gorm.DB, userID uuid.UUID) (*authModels.Session, error)
 	Delete(session *authModels.Session) error
 }
 
@@ -19,21 +20,21 @@ type SessionRepository struct {
 	*gorm.DB
 }
 
-func NewSessionRepository(DB *gorm.DB) ISessionRepository {
-	return &SessionRepository{DB: DB}
+func NewSessionRepository() ISessionRepository {
+	return &SessionRepository{DB: database.GetDB()}
 }
 
-func (sessionRepository *SessionRepository) Create(userID uuid.UUID) (*authModels.Session, error) {
+func (sessionRepository *SessionRepository) Create(tx *gorm.DB, userID uuid.UUID) (*authModels.Session, error) {
 	session := authModels.Session{
 		SessionID: uuid.New().String(),
 		UserID:    userID,
 		Expires:   getExpiry(),
 	}
 
-	sess := sessionRepository.DB.Create(&session)
+	err := tx.Create(&session).Error
 
-	if sess.Error != nil {
-		return &authModels.Session{}, sess.Error
+	if err != nil {
+		return &authModels.Session{}, err
 	}
 
 	return &session, nil

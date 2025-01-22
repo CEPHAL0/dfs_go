@@ -1,14 +1,16 @@
 package authHandler
 
 import (
-	"backend/config"
+	database "backend/config"
 	"backend/enums"
+	authModels "backend/models/auth"
 	"backend/repositories"
 	"backend/schemas"
 	"backend/services"
 	"backend/utils"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 func Register(c *fiber.Ctx) error {
@@ -22,26 +24,38 @@ func Register(c *fiber.Ctx) error {
 		return utils.ErrorResponse(err.Error(), "Validation Error", fiber.StatusBadRequest, c)
 	}
 
-	userRepository := repositories.NewUserRepository(config.DB)
-	sessionRepository := repositories.NewSessionRepository(config.DB)
+	userRepository := repositories.NewUserRepository()
+	sessionRepository := repositories.NewSessionRepository()
 	userService := services.NewUserService(userRepository, sessionRepository)
 
-	tx := config.DB.Begin()
+	var (
+		user    *authModels.User
+		session *authModels.Session
+	)
 
-	user, session, err := userService.RegisterUser(data.Username, data.Email, data.Password, enums.CUSTOMER)
+	// Setup Transaction to roll back if session could not be set
+	err := database.WithTransaction(func(tx *gorm.DB) error {
+		// Register the user and create the session as part of the transaction
+		var err error
+		user, session, err = userService.RegisterUser(data.Username, data.Email, data.Password, enums.CUSTOMER)
+		if err != nil {
+			return err
+		}
+
+		// Set the session in the user's browser
+		err = utils.SetSession(tx, session, c)
+		if err != nil {
+			return err
+		}
+
+		// Return nil to commit transaction
+		return nil
+	})
+
 	if err != nil {
-		tx.Rollback()
 		return utils.ErrorResponse(err.Error(), "Failed to Create User", fiber.StatusInternalServerError, c)
 	}
 
-	err = utils.SetSession(session, c)
-
-	if err != nil {
-		tx.Rollback()
-		return utils.ErrorResponse(err.Error(), "Failed to Save Session", fiber.StatusInternalServerError, c)
-	}
-
-	tx.Commit()
 	return utils.SuccessResponse("User Successfully Created", user, fiber.StatusCreated, c)
 
 }

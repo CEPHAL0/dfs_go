@@ -11,6 +11,7 @@ func main() {
 	app := fiber.New()
 
 	database.SetupDatabase()
+	database.Initialize(database.DB)
 	database.Migrate(database.DB)
 
 	routers.Initialize(app)

@@ -2,15 +2,17 @@ package utils
 
 import (
 	authModels "backend/models/auth"
+	"errors"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
+	"gorm.io/gorm"
 )
 
 var SessionDuration = time.Hour * 24 * 5
 
-func SetSession(sessionToSet *authModels.Session, c *fiber.Ctx) error {
+func SetSession(tx *gorm.DB, sessionToSet *authModels.Session, c *fiber.Ctx) error {
 	var Config = session.Config{
 		Expiration:     SessionDuration, // Session expiration duration
 		CookieHTTPOnly: true,            // Prevents JavaScript access to cookies
@@ -34,5 +36,5 @@ func SetSession(sessionToSet *authModels.Session, c *fiber.Ctx) error {
 		return err
 	}
 
-	return nil
+	return errors.New("Test error")
 }
